@@ -6,7 +6,6 @@ import os
 import sys
 
 from tensorflow.keras import layers
-# from sklearn.model_selection import train_tespipt_split
 
 feature_cols = [
     "MSSubClass",
@@ -110,9 +109,9 @@ def replace_numeric_nan(x):
 
 tf.enable_eager_execution()
 
-# print(origin_data[origin_data.isnull().any(axis=1)])
+
 train_target = origin_data[target_col]
-train_data = origin_data.drop(columns=[target_col])#.where(pd.notnull(origin_data), "?")
+train_data = origin_data.drop(columns=[target_col])
 test_data = origin_test_data
 test_df = origin_test_data.assign(
     MSZoning=test_data.MSZoning.apply(replace_str_nan),
@@ -141,7 +140,6 @@ test_df = origin_test_data.assign(
     ExterQual=test_data.ExterQual.apply(replace_str_nan),
     ExterCond=test_data.ExterCond.apply(replace_str_nan),
     Foundation=test_data.Foundation.apply(replace_str_nan),
-    # BsmtQual=test_data.BsmtQual.apply(replace_str_nan),
     BsmtFinSF1=test_data.BsmtFinSF1.apply(replace_numeric_nan),
     BsmtFinSF2=test_data.BsmtFinSF2.apply(replace_numeric_nan),
     BsmtUnfSF=test_data.BsmtUnfSF.apply(replace_numeric_nan),
@@ -187,13 +185,10 @@ train_df = train_data.assign(
     ExterQual=train_data.ExterQual.apply(replace_str_nan),
     ExterCond=train_data.ExterCond.apply(replace_str_nan),
     Foundation=train_data.Foundation.apply(replace_str_nan),
-    # BsmtQual=train_data.BsmtQual.apply(replace_str_nan)
     BsmtFinSF1=train_data.BsmtFinSF1.apply(replace_numeric_nan),
     BsmtFinSF2=train_data.BsmtFinSF2.apply(replace_numeric_nan),
     BsmtUnfSF=train_data.BsmtUnfSF.apply(replace_numeric_nan),
     TotalBsmtSF=train_data.TotalBsmtSF.apply(replace_numeric_nan),
-    # 1stFlrSF=train_data.1stFlrSF.apply(replace_numeric_nan),
-    # 2ndFlrSF=train_data.2ndFlrSF.apply(replace_numeric_nan),
     LowQualFinSF=train_data.LowQualFinSF.apply(replace_numeric_nan),
     GrLivArea=train_data.GrLivArea.apply(replace_numeric_nan),
     KitchenQual=train_data.KitchenQual.apply(replace_str_nan),
@@ -201,24 +196,11 @@ train_df = train_data.assign(
     GarageYrBlt=train_data.GarageYrBlt.apply(replace_numeric_nan),
     GarageCars=train_data.GarageCars.apply(replace_numeric_nan),
     GarageArea=train_data.GarageArea.apply(replace_numeric_nan),
-    # Fence=train_data.Fence.apply(replace_str_nan),
-    # MiscFeature=train_data.MiscFeature.apply(replace_str_nan)
     SaleType=train_data.SaleType.apply(replace_str_nan),
     SaleCondition=train_data.SaleCondition.apply(replace_str_nan)
 )
 train_df["1stFlrSF"] = train_data["1stFlrSF"].apply(replace_numeric_nan)
 train_df["2ndFlrSF"] = train_data["2ndFlrSF"].apply(replace_numeric_nan)
-# print(test_df)
-# print(dict(train_df))
-# print(train_df)
-
-# train_data.dropna()
-
-# print(train_df.head(20))
-print(train_df.dtypes)
-# print(train_target)
-# print(dict(train_data))
-# print(train_df.MSSubClass.isnull())
 
 print("\n--------------------------")
 
@@ -240,20 +222,9 @@ def create_test_input_fn():
         )
     )
     dataset = dataset.repeat(count=1).batch(64)
-    # dataset = 
     print(dataset)
     return dataset
 
-# ds = tf.data.Dataset.from_tensor_slices(
-#     (
-#         dict(train_df[feature_cols]),
-#         train_target
-#     )
-# )
-# for feature_batch, label_batch in ds.take(1):
-#   print('Some feature keys:', list(feature_batch.keys())[:5])
-#   print('A batch of RoofStyle  :', feature_batch['RoofStyle'])
-#   print('A batch of Labels:', label_batch )
 
 tf_features = [
     tf.feature_column.numeric_column(key="MSSubClass", dtype=tf.int64),
@@ -653,30 +624,22 @@ from tensorflow.python.ops import nn
 classifier = tf.estimator.DNNRegressor(
     feature_columns=tf_features,
     hidden_units=[128, 128, 64, 64,],
-    # dropout=0.1,
     activation_fn=nn.relu,
     optimizer=tf.train.AdamOptimizer(),
-    # batch_norm=True,
     model_dir="./tf_dnn_regressor",
-    # loss_reduction=tf.losses.Reduction.SUM
 )
 print(classifier.train(input_fn=create_train_input_fn))
 print(classifier.evaluate(input_fn=create_train_input_fn))
 
 
 print("\n-------------------------------\n")
-# print(test_df.to_dict(orient="records"))
 
 results = classifier.predict(input_fn=create_test_input_fn)
 predictions = []
 for result in results:
-    # print(result)
     if math.isnan(result["predictions"][0]):
         print(result)
     predictions.append(result["predictions"][0])
-# predictions = [
-#     result["predictions"][0] for result in results
-# ]
 
 test_df = test_df.assign(
     SalePrice=predictions
